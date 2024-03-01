@@ -1,8 +1,17 @@
 use std::path::PathBuf;
 use std::{env, fs};
+use clap::{Parser, ValueHint};
+
+#[derive(Parser)]
+#[command(version)]
+struct Args {
+    #[arg(value_hint=ValueHint::Hostname)]
+    hostname: String,
+}
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let args = Args::parse();
+    println!("{}", args.hostname);
 
     let known_hosts = read_known_hosts().unwrap_or_else(|err| {
         panic!(
@@ -18,7 +27,7 @@ fn main() {
         let a = x.split(" ").collect::<Vec<&str>>();
         let hostname = a[0];
 
-        if hostname != args[1] {
+        if hostname != args.hostname {
             new_known_hosts_vec.push(x.to_string());
         } else {
             println!("Removed {} from known_hosts.", hostname)
@@ -28,7 +37,7 @@ fn main() {
     let new_known_hosts = new_known_hosts_vec.join("\n");
 
     if new_known_hosts == read_known_hosts().unwrap() {
-        println!("{} not found in known_hosts.", args[1]);
+        println!("{} not found in known_hosts.", args.hostname);
     }
 
     write_known_hosts(new_known_hosts).unwrap_or_else(|err| {
